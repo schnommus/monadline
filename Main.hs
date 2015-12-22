@@ -3,6 +3,9 @@ module Main where
 import System.Console.ANSI
 import System.Posix.User
 import PowerlineCharacters
+import Data.List.Split
+import Data.List
+import System.Directory
 
 data TerminalColor = TerminalColor { intensity :: ColorIntensity
                                    , color :: Color }
@@ -23,11 +26,11 @@ userNameSegment = Segment { contents = getEffectiveUserName
                                                 , backgroundColor = TerminalColor Dull Blue }
                           , bold = True }
 
-userNameSegmentGray = Segment { contents = getEffectiveUserName
-                              , terminator = right_arrow_hard 
-                              , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
-                                                    , backgroundColor = TerminalColor Dull Black }
-                              , bold = True }
+directorySegment dir = Segment { contents = return dir
+                               , terminator = right_arrow_hard 
+                               , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
+                                                     , backgroundColor = TerminalColor Dull Black }
+                               , bold = True }
 
 sep = " "
 
@@ -56,18 +59,29 @@ displaySegment segment nextbg = do
     setBold $ bold segment
     setColors $ colorSet segment
     putStr (sep ++ s ++ sep)
+    resetColors
     setColors $ ColorSet (backgroundColor . colorSet $ segment) nextbg
     putStr [terminator segment]
     resetColors
-
-segments_example = [userNameSegment, userNameSegmentGray, userNameSegment, userNameSegmentGray]
 
 displaySegments :: [Segment] -> IO ()
 displaySegments [segment] = displaySegment segment Normal
 displaySegments segments = do
     displaySegment (head segments) (backgroundColor.colorSet.head.tail$segments)
     displaySegments (tail segments)
-    
+
+all_segments = [userNameSegment]
+
+replace old new = intercalate new . splitOn old
+
+directorySegments :: IO [Segment]
+directorySegments = do
+    f <- getCurrentDirectory
+    h <- getHomeDirectory
+    let s = replace h "/~" f
+    let l = tail $ splitOn "/" s
+    return $  map directorySegment l
 
 main = do
-    displaySegments segments_example
+    dirSeg <- directorySegments
+    displaySegments (all_segments ++ dirSeg)
