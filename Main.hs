@@ -18,19 +18,33 @@ data ColorSet = ColorSet { foregroundColor :: TerminalColor
 data Segment = Segment { contents :: IO String
                        , terminator :: Char
                        , colorSet :: ColorSet
-                       , bold :: Bool }
+                       , bold :: Bool
+                       , transitionfg :: TerminalColor }
 
 userNameSegment = Segment { contents = getEffectiveUserName
                           , terminator = right_arrow_hard 
                           , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
                                                 , backgroundColor = TerminalColor Dull Blue }
-                          , bold = True }
+                          , bold = True
+                          , transitionfg = Normal}
+
+bashSegment = userNameSegment { contents = return "$" }
 
 directorySegment dir = Segment { contents = return dir
-                               , terminator = right_arrow_hard 
+                               , terminator = right_arrow_soft
+                               , colorSet = ColorSet { foregroundColor = TerminalColor Dull White
+                                                     , backgroundColor = TerminalColor Dull Black }
+                               , bold = False
+                               , transitionfg = TerminalColor Dull White}
+
+finalDirectorySegment dir = Segment { contents = return dir
+                               , terminator = right_arrow_hard
                                , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
                                                      , backgroundColor = TerminalColor Dull Black }
-                               , bold = True }
+                               , bold = True
+                               , transitionfg = Normal }
+
+
 
 sep = " "
 
@@ -60,7 +74,11 @@ displaySegment segment nextbg = do
     setColors $ colorSet segment
     putStr (sep ++ s ++ sep)
     resetColors
-    setColors $ ColorSet (backgroundColor . colorSet $ segment) nextbg
+    setColors $ ColorSet 
+        (case (transitionfg segment) of
+            Normal -> (backgroundColor . colorSet $ segment)
+            _ -> transitionfg segment)
+        nextbg
     putStr [terminator segment]
     resetColors
 
@@ -70,7 +88,6 @@ displaySegments segments = do
     displaySegment (head segments) (backgroundColor.colorSet.head.tail$segments)
     displaySegments (tail segments)
 
-all_segments = [userNameSegment]
 
 replace old new = intercalate new . splitOn old
 
@@ -80,8 +97,8 @@ directorySegments = do
     h <- getHomeDirectory
     let s = replace h "/~" f
     let l = tail $ splitOn "/" s
-    return $  map directorySegment l
+    return $ (map directorySegment (init l)) ++ [finalDirectorySegment $ last l]
 
 main = do
     dirSeg <- directorySegments
-    displaySegments (all_segments ++ dirSeg)
+    displaySegments ([userNameSegment] ++ dirSeg ++ [bashSegment])
