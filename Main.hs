@@ -6,6 +6,7 @@ import PowerlineCharacters
 import Data.List.Split
 import Data.List
 import System.Directory
+import System.Environment
 
 data TerminalColor = TerminalColor { intensity :: ColorIntensity
                                    , color :: Color }
@@ -45,27 +46,60 @@ finalDirectorySegment dir = Segment { contents = return dir
                                , transitionfg = Normal }
 
 
+getErrorCode :: IO String
+getErrorCode = do
+    args <- getArgs
+    return (args !! 0)
+
+errorCodeSegment = Segment { contents = getErrorCode
+                           , terminator = right_arrow_hard 
+                           , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
+                                                 , backgroundColor = TerminalColor Dull Red }
+                           , bold = True
+                           , transitionfg = Normal}
+
+getNumJobs :: IO String
+getNumJobs = do
+    args <- getArgs
+    return (args !! 1)
+
+
+numJobsSegment = Segment { contents = getNumJobs
+                           , terminator = right_arrow_hard 
+                           , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
+                                                 , backgroundColor = TerminalColor Dull Green }
+                           , bold = True
+                           , transitionfg = Normal}
+
 
 sep = " "
 
+beginNonPrintable = putStr "\\["
+endNonPrintable = putStr "\\]"
+
+setSGR_escaped args = do
+    beginNonPrintable
+    setSGR args
+    endNonPrintable
+
 resetColors :: IO ()
-resetColors = setSGR [Reset]
+resetColors = setSGR_escaped [Reset]
 
 setColors :: ColorSet -> IO ()
 setColors (ColorSet Normal Normal) = resetColors
 setColors (ColorSet ftcolor Normal) = do
     resetColors
-    setSGR [SetColor Foreground (intensity ftcolor) (color ftcolor)]
+    setSGR_escaped [SetColor Foreground (intensity ftcolor) (color ftcolor)]
 setColors (ColorSet Normal btcolor) = do
     resetColors
-    setSGR [SetColor Background (intensity btcolor) (color btcolor)]
+    setSGR_escaped [SetColor Background (intensity btcolor) (color btcolor)]
 setColors (ColorSet ftcolor btcolor) = do
-    setSGR [SetColor Foreground (intensity ftcolor) (color ftcolor)]
-    setSGR [SetColor Background (intensity btcolor) (color btcolor)]
+    setSGR_escaped [SetColor Foreground (intensity ftcolor) (color ftcolor)]
+    setSGR_escaped [SetColor Background (intensity btcolor) (color btcolor)]
 
 setBold :: Bool -> IO ()
-setBold True = setSGR[SetConsoleIntensity BoldIntensity]
-setBold False = setSGR[SetConsoleIntensity NormalIntensity]
+setBold True = setSGR_escaped[SetConsoleIntensity BoldIntensity]
+setBold False = setSGR_escaped[SetConsoleIntensity NormalIntensity]
 
 displaySegment :: Segment -> TerminalColor -> IO ()
 displaySegment segment nextbg = do
@@ -96,9 +130,13 @@ directorySegments = do
     f <- getCurrentDirectory
     h <- getHomeDirectory
     let s = replace h "/~" f
-    let l = tail $ splitOn "/" s
+    let l = map (\d -> if d == "" then "/" else d) (tail $ splitOn "/" s)
     return $ (map directorySegment (init l)) ++ [finalDirectorySegment $ last l]
 
 main = do
     dirSeg <- directorySegments
-    displaySegments ([userNameSegment] ++ dirSeg ++ [bashSegment])
+    errorCode <- getErrorCode
+    let errorCodeSegmentSelect = if errorCode /= "0" then [errorCodeSegment] else []
+    numJobs <- getNumJobs
+    let numJobsSegmentSelect = if numJobs /= "0" then [numJobsSegment] else []
+    displaySegments ([userNameSegment] ++ dirSeg ++ numJobsSegmentSelect ++ errorCodeSegmentSelect ++ [bashSegment])
