@@ -6,13 +6,14 @@ import System.Console.ANSI
 import System.Posix.User
 import System.Directory
 import System.Environment
-import Data.List.Split
+import Data.List.Split hiding (startsWith)
 import Data.List
 import Control.Applicative
 
 -- Data we get from from bash command-line arguments
 getErrorCode = (!!0) <$> getArgs
 getNumJobs   = (!!1) <$> getArgs
+getBranch    = (!!2) <$> getArgs
 
 simpleSegment = Segment { contents = return "simpleSegment"
                         , terminator = right_arrow_hard 
@@ -58,6 +59,29 @@ numJobsSegment = Segment { contents = getNumJobs
                          , transitionfg = Normal
                          , displayWhen = (/="0") <$> getNumJobs }
 
+startsWith :: String -> String -> Bool
+startsWith s1 s2 = all ( \(c1, c2) -> c1==c2 ) (zip s1 s2)
+
+getBranchName :: IO String
+getBranchName = do
+    str_raw <- getBranch
+    putStr $ "'" ++ str_raw ++ "'"
+    case startsWith "fatal" str_raw of
+        True -> return ""
+        False -> return . ([git_branch,' ']++) . drop 2 . last . lines $ str_raw
+
+gitSegment = Segment { contents = getBranchName
+                     , terminator = right_arrow_hard 
+                     , colorSet = ColorSet { foregroundColor = TerminalColor Dull Black
+                                           , backgroundColor = TerminalColor Vivid Green }
+                     , bold = True
+                     , transitionfg = Normal
+                     , displayWhen = neverDisplay  } -- (/="") <$> getBranchName }
+
+
+
+-- Helper used in directorySegments for home directory replacing
+replace old new = intercalate new . splitOn old
 
 directorySegments :: IO [Segment]
 directorySegments = do
@@ -66,3 +90,8 @@ directorySegments = do
     let s = replace h "/~" f
     let l = map (\d -> if d == "" then "/" else d) (tail $ splitOn "/" s)
     return $ (map directorySegment (init l)) ++ [finalDirectorySegment $ last l]
+
+displayAll :: IO ()
+displayAll = do
+    dirSeg <- directorySegments
+    displaySegments $ [userNameSegment] ++ dirSeg ++ [numJobsSegment, errorCodeSegment, gitSegment, bashSegment]

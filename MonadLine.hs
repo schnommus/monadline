@@ -22,12 +22,15 @@ data Segment       = Segment       { contents :: IO String
                                    , transitionfg :: TerminalColor
                                    , displayWhen :: IO Bool }
 
+-- Helpers for simple segments
 alwaysDisplay :: IO Bool
 alwaysDisplay = return True
 
 neverDisplay :: IO Bool
-neverDisplay = return True
+neverDisplay = return False
 
+
+-- Helpers for bash text printing & colours
 sep = " "
 
 beginNonPrintable = putStr "\\["
@@ -41,6 +44,7 @@ setSGR_escaped args = do
 resetColors :: IO ()
 resetColors = setSGR_escaped [Reset]
 
+-- Setting colours with support for single colours only
 setColors :: ColorSet -> IO ()
 setColors (ColorSet Normal Normal) = resetColors
 setColors (ColorSet ftcolor Normal) = do
@@ -57,6 +61,8 @@ setBold :: Bool -> IO ()
 setBold True = setSGR_escaped[SetConsoleIntensity BoldIntensity]
 setBold False = setSGR_escaped[SetConsoleIntensity NormalIntensity]
 
+-- Takes a segment and displays it with regard to the colours of the next
+-- segment's background for smooth blending
 displaySegment :: Segment -> TerminalColor -> IO ()
 displaySegment segment nextbg = do
     s <- contents segment
@@ -72,13 +78,16 @@ displaySegment segment nextbg = do
     putStr [terminator segment]
     resetColors
 
+-- Actually displays each segment that was previously determined to be
+-- displayable
 doDisplaySegments :: [Segment] -> IO ()
 doDisplaySegments [segment] = displaySegment segment Normal
 doDisplaySegments segments = do
     displaySegment (head segments) (backgroundColor.colorSet.head.tail$segments)
     doDisplaySegments (tail segments)
 
+-- Filters out any segments that aren't displayable and calss display
+-- function
 displaySegments :: [Segment] -> IO ()
 displaySegments segments = filterM displayWhen segments >>= doDisplaySegments
 
-replace old new = intercalate new . splitOn old
