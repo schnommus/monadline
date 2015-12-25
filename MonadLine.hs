@@ -5,6 +5,7 @@ import System.Posix.User
 import PowerlineCharacters
 import Data.List.Split
 import Data.List
+import Control.Monad
 
 data TerminalColor = TerminalColor { intensity :: ColorIntensity
                                    , color :: Color }
@@ -75,12 +76,9 @@ doDisplaySegments :: [Segment] -> IO ()
 doDisplaySegments [segment] = displaySegment segment Normal
 doDisplaySegments segments = do
     displaySegment (head segments) (backgroundColor.colorSet.head.tail$segments)
-    displaySegments (tail segments)
+    doDisplaySegments (tail segments)
 
 displaySegments :: [Segment] -> IO ()
-displaySegments segments do
-    doDisplaySegments $ filter:w
-
-
+displaySegments segments = filterM displayWhen segments >>= doDisplaySegments
 
 replace old new = intercalate new . splitOn old
