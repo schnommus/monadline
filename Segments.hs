@@ -36,12 +36,12 @@ directorySegment dir = Segment { contents = return dir
                                , displayWhen = alwaysDisplay }
 
 finalDirectorySegment dir = Segment { contents = return dir
-                               , terminator = right_arrow_hard
-                               , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
-                                                     , backgroundColor = TerminalColor Dull Black }
-                               , bold = True
-                               , transitionfg = Normal
-                               , displayWhen = alwaysDisplay }
+                                    , terminator = right_arrow_hard
+                                    , colorSet = ColorSet { foregroundColor = TerminalColor Vivid White
+                                                          , backgroundColor = TerminalColor Dull Black }
+                                    , bold = True
+                                    , transitionfg = Normal
+                                    , displayWhen = alwaysDisplay }
 
 errorCodeSegment = Segment { contents = getErrorCode
                            , terminator = right_arrow_hard 
@@ -70,15 +70,13 @@ getBranchName = do
         True -> return ""
         False -> return . ([git_branch,' ']++) . drop 2 . last . lines $ str_raw
 
-gitSegment = Segment { contents = getBranchName
+gitSegment = Segment { contents = return "" -- getBranchName
                      , terminator = right_arrow_hard 
                      , colorSet = ColorSet { foregroundColor = TerminalColor Dull Black
                                            , backgroundColor = TerminalColor Vivid Green }
                      , bold = True
                      , transitionfg = Normal
-                     , displayWhen = neverDisplay  } -- (/="") <$> getBranchName }
-
-
+                     , displayWhen = neverDisplay } -- (/="") <$> getBranchName }
 
 -- Helper used in directorySegments for home directory replacing
 replace old new = intercalate new . splitOn old
@@ -94,4 +92,4 @@ directorySegments = do
 displayAll :: IO ()
 displayAll = do
     dirSeg <- directorySegments
-    displaySegments $ [userNameSegment] ++ dirSeg ++ [numJobsSegment, errorCodeSegment, gitSegment, bashSegment]
+    displaySegments $ [userNameSegment] ++ dirSeg ++ [numJobsSegment, errorCodeSegment, bashSegment]
