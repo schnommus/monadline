@@ -22,7 +22,7 @@ Put this in your `~/.bashrc`
 
     #!/bin/bash
 
-    MONADLINE_DIR=~/haskell/monadline
+    MONADLINE_DIR=~/.monadline
 
     set_monadline_prompt(){
         PS1="$($MONADLINE_DIR/dist/build/monadline/monadline $? $(jobs -p|wc -l)) "
