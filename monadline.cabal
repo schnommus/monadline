@@ -1,0 +1,26 @@
+name:                monadline
+version:             0.1.0.0
+synopsis:            A bash prompt prettifier, inspired by Powerline
+
+-- description:         
+homepage:            www.sebholzapfel.com/monadline
+license:             MIT
+license-file:        LICENSE
+author:              Sebastian Holzapfel
+maintainer:          schnommus@gmail.com
+
+-- copyright:           
+category:            System
+build-type:          Simple
+
+-- extra-source-files:  
+cabal-version:       >=1.10
+
+executable monadline
+  main-is:             Main.hs
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.8 && <4.9, ansi-terminal >=0.6 && <0.7, unix >=2.7 && <2.8, split >=0.2 && <0.3, directory >=1.2 && <1.3
+
+  -- hs-source-dirs:      
+  default-language:    Haskell2010

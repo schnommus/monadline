@@ -13,7 +13,6 @@ import Control.Applicative
 -- Data we get from from bash command-line arguments
 getErrorCode = (!!0) <$> getArgs
 getNumJobs   = (!!1) <$> getArgs
-getBranch    = (!!2) <$> getArgs
 
 simpleSegment = Segment { contents = return "simpleSegment"
                         , terminator = right_arrow_hard 
@@ -58,25 +57,6 @@ numJobsSegment = Segment { contents = getNumJobs
                          , bold = True
                          , transitionfg = Normal
                          , displayWhen = (/="0") <$> getNumJobs }
-
-startsWith :: String -> String -> Bool
-startsWith s1 s2 = all ( \(c1, c2) -> c1==c2 ) (zip s1 s2)
-
-getBranchName :: IO String
-getBranchName = do
-    str_raw <- getBranch
-    putStr $ "'" ++ str_raw ++ "'"
-    case startsWith "fatal" str_raw of
-        True -> return ""
-        False -> return . ([git_branch,' ']++) . drop 2 . last . lines $ str_raw
-
-gitSegment = Segment { contents = return "" -- getBranchName
-                     , terminator = right_arrow_hard 
-                     , colorSet = ColorSet { foregroundColor = TerminalColor Dull Black
-                                           , backgroundColor = TerminalColor Vivid Green }
-                     , bold = True
-                     , transitionfg = Normal
-                     , displayWhen = neverDisplay } -- (/="") <$> getBranchName }
 
 -- Helper used in directorySegments for home directory replacing
 replace old new = intercalate new . splitOn old
