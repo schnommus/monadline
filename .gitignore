@@ -1,5 +1,4 @@
 *.hi
 *.o
 *.swp
-Main
-monadline
+dist
