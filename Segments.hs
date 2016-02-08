@@ -8,6 +8,7 @@ import System.Directory
 import System.Environment
 import Data.List.Split hiding (startsWith)
 import Data.List
+import Data.Maybe
 import Control.Applicative
 
 -- Data we get from from bash command-line arguments
@@ -37,7 +38,7 @@ bashSegment =    simpleSegment
     }
 
 gitSegment =    simpleSegment
-    { contents =  (git_branch:) . (' ':) . last . words <$> getGitBranch
+    { contents =  (git_branch:) . (' ':) . last . words . fromJust . find (\x->x!!0=='*') . lines <$> getGitBranch
     , displayWhen = (/="fatal:") . head . words <$> getGitBranch
     }
 
