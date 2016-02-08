@@ -12,9 +12,7 @@ import Control.Applicative
 
 -- Data we get from from bash command-line arguments
 getErrorCode = (!! 0) <$> getArgs
-
 getNumJobs = (!! 1) <$> getArgs
-
 getGitBranch = (!! 2) <$> getArgs
 
 simpleSegment =    Segment
@@ -113,4 +111,4 @@ displayAll = do
     dirSeg <- directorySegments
     displaySegments $
         [userNameSegment] ++
-        dirSeg ++ [numJobsSegment, errorCodeSegment, bashSegment, gitSegment]
+        dirSeg ++ [numJobsSegment, errorCodeSegment, gitSegment, bashSegment]
