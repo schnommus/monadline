@@ -25,7 +25,7 @@ Put this in your `~/.bashrc`
     MONADLINE_DIR=~/.monadline
 
     set_monadline_prompt(){
-        PS1="$($MONADLINE_DIR/dist/build/monadline/monadline $? $(jobs -p|wc -l)) "
+        PS1="$($MONADLINE_DIR/dist/build/monadline/monadline $? $(jobs -p|wc -l) "$(git branch 2>&1)") "
     }
 
     PROMPT_COMMAND=set_monadline_prompt

@@ -15,6 +15,8 @@ getErrorCode = (!! 0) <$> getArgs
 
 getNumJobs = (!! 1) <$> getArgs
 
+getGitBranch = (!! 2) <$> getArgs
+
 simpleSegment =    Segment
     { contents = return "simpleSegment"
     , terminator = right_arrow_hard
@@ -33,6 +35,12 @@ userNameSegment =    simpleSegment
 
 bashSegment =    simpleSegment
     { contents = return "$"
+    , displayWhen = neverDisplay
+    }
+
+gitSegment =    simpleSegment
+    { contents =  (git_branch:) . (' ':) . last . words <$> getGitBranch
+    , displayWhen = (/="fatal:") . head . words <$> getGitBranch
     }
 
 directorySegment dir =    Segment
@@ -105,4 +113,4 @@ displayAll = do
     dirSeg <- directorySegments
     displaySegments $
         [userNameSegment] ++
-        dirSeg ++ [numJobsSegment, errorCodeSegment, bashSegment]
+        dirSeg ++ [numJobsSegment, errorCodeSegment, bashSegment, gitSegment]

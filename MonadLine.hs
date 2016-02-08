@@ -90,7 +90,9 @@ displaySegment segment nextbg = do
 -- displayable
 doDisplaySegments
     :: [Segment] -> IO ()
-doDisplaySegments [segment] = displaySegment segment Normal
+doDisplaySegments [segment] = do
+    displaySegment segment Normal
+    putStr " "
 doDisplaySegments segments = do
     displaySegment
         (head segments)
