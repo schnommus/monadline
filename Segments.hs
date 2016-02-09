@@ -10,6 +10,7 @@ import Data.List.Split hiding (startsWith)
 import Data.List
 import Data.Maybe
 import Control.Applicative
+import Network.HostName
 
 -- Data we get from from bash command-line arguments
 getErrorCode = (!! 0) <$> getArgs
@@ -29,7 +30,10 @@ simpleSegment =    Segment
     }
 
 userNameSegment =    simpleSegment
-    { contents = getEffectiveUserName
+    { contents = do
+        user <- getEffectiveUserName
+        host <- getHostName
+        return $ user ++ "@" ++ host
     }
 
 bashSegment =    simpleSegment

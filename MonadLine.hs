@@ -1,7 +1,6 @@
 module MonadLine where
 
 import System.Console.ANSI
-import System.Posix.User
 import PowerlineCharacters
 import Data.List.Split
 import Data.List
